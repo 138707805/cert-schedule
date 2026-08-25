@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<title>자격증 시험일정</title>
+<meta name="theme-color" content="#2f6fed" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-180.png" />
+<link rel="icon" href="icons/icon-192.png" />
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<header class="topbar">
+  <h1>자격증 시험일정</h1>
+  <p class="updated" id="updatedAt">데이터 불러오는 중...</p>
+</header>
+
+<div class="searchbar">
+  <input type="search" id="searchInput" placeholder="자격증/등급으로 검색 (예: 공인노무사, SQLD, 기능사)" />
+</div>
+
+<div class="chips" id="chipRow">
+  <button class="chip active" data-qualgb="ALL">전체</button>
+  <button class="chip" data-qualgb="T" data-level="기능사">기능사</button>
+  <button class="chip" data-qualgb="T" data-level="기능장">기능장</button>
+  <button class="chip" data-qualgb="T" data-level="기사">기사·산업기사</button>
+  <button class="chip" data-qualgb="T" data-level="기술사">기술사</button>
+  <button class="chip" data-qualgb="S">국가전문자격</button>
+  <button class="chip" data-qualgb="C">과정평가형</button>
+  <button class="chip" data-qualgb="W">일학습병행</button>
+  <button class="chip" data-qualgb="DATA">데이터자격(K-DATA)</button>
+  <button class="chip" data-qualgb="KCA">전파진흥원(KCA)</button>
+</div>
+
+<div class="chips chips-secondary" id="phaseRow">
+  <button class="chip active" data-phase="ALL">전체 단계</button>
+  <button class="chip" data-phase="필기">필기만</button>
+  <button class="chip" data-phase="실기">실기만</button>
+</div>
+
+<main id="listContainer" class="list"></main>
+
+<p class="pastToggleWrap">
+  <button id="pastToggle" class="pastToggle">지난 일정 보기</button>
+</p>
+
+<template id="cardTemplate">
+  <article class="card">
+    <div class="card-head">
+      <span class="badge"></span>
+      <h2 class="cert-name"></h2>
+      <button class="star" aria-label="즐겨찾기">☆</button>
+    </div>
+    <p class="next-info"></p>
+    <p class="single-date"></p>
+    <div class="phase-grid">
+      <div class="phase phase-written">
+        <h3>필기</h3>
+        <dl>
+          <dt>접수</dt><dd class="w-apply"></dd>
+          <dt>시험</dt><dd class="w-exam"></dd>
+          <dt>발표</dt><dd class="w-result"></dd>
+        </dl>
+      </div>
+      <div class="phase phase-practical">
+        <h3>실기</h3>
+        <dl>
+          <dt>접수</dt><dd class="p-apply"></dd>
+          <dt>시험</dt><dd class="p-exam"></dd>
+          <dt>발표</dt><dd class="p-result"></dd>
+        </dl>
+      </div>
+    </div>
+    <a class="source-link hidden" target="_blank" rel="noopener">이 일정의 원본 페이지 보기 ↗</a>
+  </article>
+</template>
+
+<nav class="tabbar">
+  <button class="tab active" data-tab="all">전체 일정</button>
+  <button class="tab" data-tab="fav">⭐ 즐겨찾기</button>
+  <button class="tab" data-tab="source">출처</button>
+</nav>
+
+<section id="sourcePanel" class="source-panel hidden">
+  <h2>이 앱의 데이터는 어디서 오나요?</h2>
+
+  <div class="source-card">
+    <h3>주 출처 · 공공데이터포털 오픈 API</h3>
+    <p><strong>한국산업인력공단_국가자격 시험일정 조회 서비스</strong></p>
+    <p class="muted">제공기관: 한국산업인력공단 (Q-Net)</p>
+    <p class="muted">국가기술자격 · 국가전문자격 · 과정평가형 · 일학습병행 4개 구분의, <strong>등급/회차 단위</strong> 필기·실기 원서접수·시험일·합격발표일을 공식 API로 받아옵니다.</p>
+    <a href="https://www.data.go.kr/data/15074408/openapi.do" target="_blank" rel="noopener">data.go.kr에서 원본 데이터 보기 ↗</a>
+  </div>
+
+  <div class="source-card note">
+    <h3>국가기술자격(기사·기능사 등)은 등급 단위입니다 (중요)</h3>
+    <p class="muted">위 공식 API는 "정보처리기사"처럼 구체적인 종목명이 아니라, <strong>기능사 / 기능장 / 기사·산업기사 / 기술사</strong> 같은 등급별로 회차 일정을 제공합니다. 즉 "기능사 제107회 실기시험은 언제"는 정확히 알 수 있지만, 그 회차에 어떤 구체적 종목들이 포함되는지까지는 이 API에 없습니다.</p>
+    <p class="muted">Q-Net 홈페이지에는 종목명이 나온 표가 따로 있지만, 회차 번호 체계가 이 공식 API와 정확히 일치하지 않는 사례를 확인해서 — 잘못된 날짜를 특정 종목에 붙이는 위험을 피하려고 국가기술자격은 이 방식으로 연결하지 않았습니다 (아래 국가전문자격·데이터자격·KCA 항목들은 종목명이 명확한 별도 출처라 종목명 그대로 보여줍니다). 정보처리기사 등 국가기술자격 특정 종목이 몇 회차인지는 아래 Q-Net 링크에서 직접 확인해주세요.</p>
+    <a href="https://www.q-net.or.kr/crf021.do" target="_blank" rel="noopener">Q-Net 연간 시험일정(종목별 회차 확인) ↗</a>
+  </div>
+
+  <div class="source-card">
+    <h3>국가전문자격 개별 종목명 · Q-Net 일정 캘린더</h3>
+    <p class="muted">관세사·공인노무사·변리사·경영지도사 등 국가전문자격은 Q-Net 일정 캘린더 페이지에 종목명과 정확한 날짜가 함께 게시되어 있어, 이 화면을 그대로 가져와 종목별 카드로 보여줍니다. (국가기술자격 기사/기능사 등급 항목은 위 공식 API 쪽에서 이미 다루고 있어 여기서는 제외했습니다.)</p>
+    <a href="https://www.q-net.or.kr/crf021.do?id=crf02103" target="_blank" rel="noopener">Q-Net 국가전문자격 일정 캘린더 ↗</a>
+  </div>
+
+  <div class="source-card">
+    <h3>데이터자격시험 · 한국데이터산업진흥원(K-DATA)</h3>
+    <p class="muted">빅데이터분석기사, 데이터분석 전문가/준전문가(ADP/ADsP), SQL 전문가/개발자(SQLP/SQLD), 데이터아키텍처 전문가/준전문가(DAP/DAsP)의 회차별 시험일정입니다.</p>
+    <a href="https://www.dataq.or.kr/www/accept/schedule.do" target="_blank" rel="noopener">데이터자격시험 시험일정 ↗</a>
+  </div>
+
+  <div class="source-card">
+    <h3>전파·통신 자격검정 · 한국방송통신전파진흥원(KCA)</h3>
+    <p class="muted">정보통신기술사, 전파전자통신기능사(수시), 무선통신사·아마추어무선기사(항공무선통신사 포함)의 시험일정입니다.</p>
+    <a href="https://www.cq.or.kr/qh_quagm03_001.do" target="_blank" rel="noopener">KCA 연간시험일정 ↗</a>
+  </div>
+
+  <div class="source-card note">
+    <h3>포함되지 않은 자격증</h3>
+    <p class="muted">의사·간호사·약사 등 보건의료 국가시험(국시원 관장), 변호사시험(법무부 관장), 공인회계사(금융감독원 관장) 등은 위 기관들이 아닌 별도 기관이 시행하여 이번 버전에는 포함되어 있지 않습니다. 또한 수천 종에 달하는 민간자격 전반은 통합된 일정 데이터가 없어 제외했습니다.</p>
+  </div>
+
+  <p class="last-fetch" id="sourceUpdatedAt"></p>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>

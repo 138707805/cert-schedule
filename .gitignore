@@ -1,0 +1,10 @@
+# Cloudflare wrangler 로컬 캐시 — 계정 ID와 이메일이 들어있어 올리지 않는다
+.wrangler/
+
+# 의존성 (복원 가능)
+node_modules/
+
+# OS/에디터 부산물
+.DS_Store
+Thumbs.db
+*.log

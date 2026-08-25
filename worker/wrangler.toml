@@ -1,0 +1,10 @@
+name = "cert-schedule-api"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[triggers]
+crons = ["0 20 * * *"]
+
+[[kv_namespaces]]
+binding = "SCHEDULES"
+id = "dcf12b1b59c540be92ab3a29b097f648"
