@@ -56,7 +56,7 @@ Codex가 독립 기능을 맡을 때는 방향이 반대다: Codex가 `codex/<�
   저장소에 CI 워크플로가 없어 PR에서 자동으로 도는 검사는 아직 없다.
 - 루트 파일을 바꿨으면 `dist/`가 맞춰져 있음. 수집 파서를 바꿨으면 실제 소스와 대조한 내용이 PR에 있음
 - 마지막 Codex 리뷰에 P0/P1 지적이 없음. 동의하지 않는 지적도 근거를 스레드에 답한 뒤 다시 리뷰받고, 5회 뒤에도 남으면 차단(사용자가 명시적으로 보류를 결정한 경우만 예외)
-- `docs/plans/`의 계획과 실제 변경이 일치
+- 계획이 필요한 작업이면(사소한 변경은 계획 문서를 만들지 않는다) `docs/plans/`의 계획과 실제 변경이 일치
 
 ## 배포
 
@@ -64,7 +64,8 @@ Codex가 독립 기능을 맡을 때는 방향이 반대다: Codex가 `codex/<�
 AI는 사용자가 요청할 때만 배포한다. 작업 브랜치나 커밋하지 않은 파일을 운영에 올리지 않는다.
 wrangler 로그인이 없는 환경(클라우드 세션 등)에서는 배포하지 않고 사용자에게 할 일을 알린다.
 웹·Worker 모두 배포 전에 먼저 확인한다: `git switch main && git pull --ff-only` 뒤 `git status --porcelain`이
-비어 있어야 한다(무엇이든 나오면 배포하지 않는다).
+비어 있고, `git rev-parse HEAD`가 `git rev-parse origin/main`과 같아야 한다(push하지 않은 로컬 커밋이 없다는 뜻).
+하나라도 어긋나면 배포하지 않는다.
 
 - **웹** (Cloudflare Pages `cert-schedule`): 위 확인 →
   `rm -rf dist && mkdir dist && cp index.html style.css app.js manifest.json sw.js dist/ && cp -r icons dist/` →

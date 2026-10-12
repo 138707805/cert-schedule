@@ -62,6 +62,7 @@ Q-Net 홈페이지(`q-net.or.kr/crf021.do?scheType=01~04`)에는 종목명이 �
 cd /mnt/c/Users/user/Desktop/vs/cert-schedule
 git switch main && git pull --ff-only
 git status --porcelain   # 비어 있어야 함. 무엇이든 나오면 배포하지 않는다
+test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" && echo OK   # OK가 안 나오면 push 안 된 로컬 커밋 → 배포하지 않는다
 rm -rf dist && mkdir dist && cp index.html style.css app.js manifest.json sw.js dist/ && cp -r icons dist/
 git status --porcelain   # 여전히 비어 있어야 함. 나오면 커밋된 dist/가 루트와 어긋난 것 → 배포 중단, PR로 고친다
 npx wrangler pages deploy dist --project-name=cert-schedule
@@ -72,6 +73,7 @@ npx wrangler pages deploy dist --project-name=cert-schedule
 cd /mnt/c/Users/user/Desktop/vs/cert-schedule
 git switch main && git pull --ff-only
 git status --porcelain   # 비어 있어야 함. 무엇이든 나오면 배포하지 않는다
+test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" && echo OK   # OK가 안 나오면 push 안 된 로컬 커밋 → 배포하지 않는다
 cd worker && npx wrangler deploy
 ```
 
