@@ -38,7 +38,7 @@
 3. **cq.or.kr** (한국방송통신전파진흥원/KCA) — 정보통신기술사, 전파전자통신기능사(수시), 무선통신사·아마추어무선기사(항공 포함). 정적 HTML 표 파싱. cq.or.kr의 "기능장·기사·산업기사·기능사" 표는 여러 종목이 한 회차에 섞여 있어(HRD Korea와 같은 이유) 의도적으로 제외함.
 4. **Q-Net 국가전문자격 캘린더** (`crf021.do?id=crf02103&schMonth=YYYYMM01`) — 관세사/공인노무사/변리사 등 종목명이 `fn_openCalendar('google','제목','시작일','종료일')` 안에 그대로 박혀 있어 정확한 날짜로 추출 가능. `kind:'single'` 카드로 렌더링(필기/실기 그리드 없이 라벨+날짜 1줄). 국가기술자격(기사/기능사 등) 관련 항목은 1)과 중복이라 필터링해서 제외.
 
-각 소스의 파서는 `worker/src/index.js`에 `fetchHrdKorea`/`fetchDataq`/`fetchKca`/`fetchQnetCalendar`로 분리되어 있고, 하나가 실패해도 나머지는 계속 진행됨(`refreshSchedules`의 try/catch).
+각 소스의 파서는 `worker/src/index.js`에 `fetchHrdKorea`/`fetchDataq`/`fetchKca`/`fetchQnetCalendar`로 분리되어 있고, 하나가 실패해도 나머지는 계속 진행됨(`refreshSchedules`의 try/catch). 다만 결과가 비거나 줄어도 KV를 그대로 덮어쓰고, `/api/refresh`에는 인증이 없다(아직 고치지 않은 위험, AGENTS.md "알려진 위험").
 
 **주의**: dataq.or.kr은 Playwright 같은 실제 브라우저(CDP 연결)로 접근하면 "개발자 도구 감지" 스크립트가 막아버림 — 반드시 plain `fetch()`(Worker의 fetch, 또는 Python urllib 등)로만 접근할 것. Q-Net 캘린더/cq.or.kr은 이런 차단이 없었음.
 
@@ -58,16 +58,31 @@ Q-Net 홈페이지(`q-net.or.kr/crf021.do?scheType=01~04`)에는 종목명이 �
 ## 배포 방법
 
 ### 웹사이트 배포
+괄호(서브셸) 안에서 돌기 때문에 확인이 하나라도 실패하면 그 자리에서 멈추고 배포하지 않는다(터미널은 닫히지 않는다).
 ```bash
-cd /mnt/c/Users/user/Desktop/vs/cert-schedule
-rm -rf dist && mkdir dist && cp index.html style.css app.js manifest.json sw.js dist/ && cp -r icons dist/
-npx wrangler pages deploy dist --project-name=cert-schedule
+(
+  cd /mnt/c/Users/user/Desktop/vs/cert-schedule || exit 1
+  git switch main || exit 1
+  git pull --ff-only || exit 1
+  [ -z "$(git status --porcelain)" ] || { echo "중단: 작업 트리에 변경이 있음"; exit 1; }
+  [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || { echo "중단: push 안 된 로컬 커밋이 있음"; exit 1; }
+  rm -rf dist && mkdir dist && cp index.html style.css app.js manifest.json sw.js dist/ && cp -r icons dist/ || exit 1
+  [ -z "$(git status --porcelain)" ] || { echo "중단: dist/가 루트 파일과 어긋남 → PR로 고친다"; exit 1; }
+  npx wrangler pages deploy dist --project-name=cert-schedule
+)
 ```
 
 ### Worker 배포
+괄호(서브셸) 안에서 돌기 때문에 확인이 하나라도 실패하면 그 자리에서 멈추고 배포하지 않는다(터미널은 닫히지 않는다).
 ```bash
-cd /mnt/c/Users/user/Desktop/vs/cert-schedule/worker
-npx wrangler deploy
+(
+  cd /mnt/c/Users/user/Desktop/vs/cert-schedule || exit 1
+  git switch main || exit 1
+  git pull --ff-only || exit 1
+  [ -z "$(git status --porcelain)" ] || { echo "중단: 작업 트리에 변경이 있음"; exit 1; }
+  [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || { echo "중단: push 안 된 로컬 커밋이 있음"; exit 1; }
+  cd worker && npx wrangler deploy
+)
 ```
 
 Worker는 매일 20:00 UTC(한국시간 새벽 5시)에 cron으로 자동 재수집됨 (`wrangler.toml`의 `[triggers]`).
