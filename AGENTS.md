@@ -42,8 +42,13 @@ rm -rf dist && mkdir dist && cp index.html style.css app.js manifest.json sw.js 
   코드·`wrangler.toml`·응답·`errors`·로그·PR·댓글에 넣지 않는다. `.wrangler/`(계정 ID·이메일)는 커밋하지 않는다.
 - 시험 날짜가 틀리면 사용자가 시험을 놓친다. 소스가 직접 주는 단위(등급·회차)와 날짜만 보여 주고, 확인되지 않은
   종목명↔회차 연결을 하지 않는다. 출처 탭의 한계 고지를 지우거나 흐리지 않는다.
-- 수집 대상 사이트는 하루 한 번(cron) 부른다. dataq.or.kr은 브라우저 자동화를 막으므로 plain `fetch()`로만 접근한다.
+- 수집은 매일 한 번 cron으로 한다. 수집 대상 사이트를 더 자주 부르는 경로를 만들지 않는다.
+  dataq.or.kr은 브라우저 자동화를 막으므로 plain `fetch()`로만 접근한다.
 - 운영 Worker의 `/api/refresh`는 모든 소스를 다시 수집해 KV를 덮어쓰고 서비스 키의 호출 한도를 쓴다. 사용자 요청 없이 부르지 않는다.
+- **알려진 위험(아직 고치지 않음)**. 아래 두 보호는 지금 코드에 없으므로 있는 것으로 가정하지 않는다.
+  - `/api/refresh`에 인증이 없어 주소를 아는 누구나 부를 수 있다. 하루 한 번 수집과 서비스 키 한도는 지금 코드로 보장되지 않는다.
+  - `refreshSchedules`는 소스가 실패해 결과가 비거나 크게 줄어도 KV를 그대로 덮어쓴다(`worker/src/index.js`의 `SCHEDULES.put`).
+  - 고치려면 Worker 코드 변경과 배포가 필요하다(refresh 인증은 Worker 시크릿 등록도). 사용자가 정한 뒤 별도 PR로 한다.
 - 즐겨찾기는 기기 `localStorage`에만 둔다. 서버로 보내지 않는다.
 - 비밀값(API 키, 토큰, `~/.codex/auth.json`, `.env`)을 커밋·PR·댓글·로그에 남기지 않는다.
 
@@ -69,7 +74,8 @@ rm -rf dist && mkdir dist && cp index.html style.css app.js manifest.json sw.js 
   출처 탭의 한계 고지를 지우거나 흐리면 P1.
 - `QNET_SERVICE_KEY`가 코드·`wrangler.toml`에 들어가거나 응답·`errors`·KV에 실릴 수 있게 되면 P0. `errors`는 KV에 저장돼
   `/api/schedules`로 공개된다. 안전한 경로: `env.QNET_SERVICE_KEY`로만 읽고, 오류 메시지에 키가 든 URL을 넣지 않는다.
-- 한 소스의 실패가 다른 소스를 막거나, 수집 결과가 비거나 크게 줄었는데 기존 KV 데이터를 덮어쓰거나, 인증 없이 부를 수 있는
-  수집·쓰기 경로를 새로 만들면 P1. 안전한 경로: 소스별 try/catch를 유지하고, 결과가 이상하면 이전 캐시를 그대로 둔다.
+- 한 소스의 실패가 다른 소스를 막는 변경, 수집 결과가 KV를 덮어쓰는 조건을 더 느슨하게 하는 변경, 인증 없이 부를 수 있는
+  수집·쓰기 경로를 새로 만드는 변경은 P1. 이전 캐시 보존과 `/api/refresh` 인증은 아직 코드에 없다(위 "알려진 위험").
+  안전한 경로: 소스별 try/catch를 유지하고, 새 수집·쓰기 경로에는 인증과 "결과가 비거나 크게 줄면 이전 캐시를 그대로 두는" 확인을 넣는다.
 - `sw.js`를 cache-first로 되돌리거나 `sw.js`를 바꾸면서 `CACHE`를 올리지 않으면 P1(설치된 사용자가 옛 화면에 갇힌다,
   2026-08-17에 고친 사고). 루트 파일을 바꾸고 `dist/`를 맞추지 않았으면 지적한다.

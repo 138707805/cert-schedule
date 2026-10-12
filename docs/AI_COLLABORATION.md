@@ -73,7 +73,8 @@ wrangler 로그인이 없는 환경(클라우드 세션 등)에서는 배포하�
   `npx wrangler pages deploy dist --project-name=cert-schedule` ([PROJECT_STATE.md](../PROJECT_STATE.md) "배포 방법")
 - **Worker** (`cert-schedule-api`): 위 확인 → `cd worker && npx wrangler deploy`. `QNET_SERVICE_KEY` 시크릿은 이미 등록돼 있다.
   다시 넣을 때는 `npx wrangler secret put QNET_SERVICE_KEY`로 입력하고, 값을 저장소·채팅·로그에 쓰지 않는다.
-- 데이터는 매일 20:00 UTC(한국 05:00) cron이 다시 모은다. 배포 직후 바로 갱신해야 하면 사용자에게 물은 뒤 `/api/refresh`를 부른다.
+- 데이터는 매일 20:00 UTC(한국 05:00) cron이 다시 모은다. 배포 직후 바로 갱신해야 하면 사용자에게 물은 뒤 `/api/refresh`를 부르고,
+  응답의 `count`·`errors`를 확인한다. 소스가 실패해도 결과가 그대로 KV를 덮어쓰므로(AGENTS.md "알려진 위험"), 수가 크게 줄었으면 사용자에게 알린다.
 - 설치된 PWA는 `sw.js`가 network-first라서 다음 온라인 실행 때 새 파일을 받는다.
 
 ## 작업 상태 공유
