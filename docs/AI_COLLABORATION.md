@@ -63,11 +63,14 @@ Codex가 독립 기능을 맡을 때는 방향이 반대다: Codex가 `codex/<�
 자동 배포는 없다. 사용자 PC에서 `npx wrangler`로 직접 배포하며, 병합된 최신 `main`만 올린다.
 AI는 사용자가 요청할 때만 배포한다. 작업 브랜치나 커밋하지 않은 파일을 운영에 올리지 않는다.
 wrangler 로그인이 없는 환경(클라우드 세션 등)에서는 배포하지 않고 사용자에게 할 일을 알린다.
+웹·Worker 모두 배포 전에 먼저 확인한다: `git switch main && git pull --ff-only` 뒤 `git status --porcelain`이
+비어 있어야 한다(무엇이든 나오면 배포하지 않는다).
 
-- **웹** (Cloudflare Pages `cert-schedule`): `git switch main && git pull` →
+- **웹** (Cloudflare Pages `cert-schedule`): 위 확인 →
   `rm -rf dist && mkdir dist && cp index.html style.css app.js manifest.json sw.js dist/ && cp -r icons dist/` →
+  `git status --porcelain`을 다시 확인(무엇이든 나오면 커밋된 `dist/`가 루트 파일과 어긋난 것이므로 배포하지 않고 PR로 고친다) →
   `npx wrangler pages deploy dist --project-name=cert-schedule` ([PROJECT_STATE.md](../PROJECT_STATE.md) "배포 방법")
-- **Worker** (`cert-schedule-api`): `cd worker && npx wrangler deploy`. `QNET_SERVICE_KEY` 시크릿은 이미 등록돼 있다.
+- **Worker** (`cert-schedule-api`): 위 확인 → `cd worker && npx wrangler deploy`. `QNET_SERVICE_KEY` 시크릿은 이미 등록돼 있다.
   다시 넣을 때는 `npx wrangler secret put QNET_SERVICE_KEY`로 입력하고, 값을 저장소·채팅·로그에 쓰지 않는다.
 - 데이터는 매일 20:00 UTC(한국 05:00) cron이 다시 모은다. 배포 직후 바로 갱신해야 하면 사용자에게 물은 뒤 `/api/refresh`를 부른다.
 - 설치된 PWA는 `sw.js`가 network-first라서 다음 온라인 실행 때 새 파일을 받는다.

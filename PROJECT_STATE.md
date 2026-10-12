@@ -60,14 +60,19 @@ Q-Net 홈페이지(`q-net.or.kr/crf021.do?scheType=01~04`)에는 종목명이 �
 ### 웹사이트 배포
 ```bash
 cd /mnt/c/Users/user/Desktop/vs/cert-schedule
+git switch main && git pull --ff-only
+git status --porcelain   # 비어 있어야 함. 무엇이든 나오면 배포하지 않는다
 rm -rf dist && mkdir dist && cp index.html style.css app.js manifest.json sw.js dist/ && cp -r icons dist/
+git status --porcelain   # 여전히 비어 있어야 함. 나오면 커밋된 dist/가 루트와 어긋난 것 → 배포 중단, PR로 고친다
 npx wrangler pages deploy dist --project-name=cert-schedule
 ```
 
 ### Worker 배포
 ```bash
-cd /mnt/c/Users/user/Desktop/vs/cert-schedule/worker
-npx wrangler deploy
+cd /mnt/c/Users/user/Desktop/vs/cert-schedule
+git switch main && git pull --ff-only
+git status --porcelain   # 비어 있어야 함. 무엇이든 나오면 배포하지 않는다
+cd worker && npx wrangler deploy
 ```
 
 Worker는 매일 20:00 UTC(한국시간 새벽 5시)에 cron으로 자동 재수집됨 (`wrangler.toml`의 `[triggers]`).
